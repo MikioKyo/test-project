@@ -1,0 +1,44 @@
+version: '3'
+
+networks:
+  webapp:
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: ${APP_NAME}_nginx
+    ports:
+    - "8000:80"
+    links:
+      - php
+    volumes:
+      - ./app/:/var/www/html
+      - ./docker/nginx/site.conf:/etc/nginx/conf.d/default.conf:rw
+      - ./docker/logs/nginx:/var/logs/nginx:rw
+    depends_on:
+      - php
+    networks:
+      - webapp
+  php:
+    build:
+      context: ./docker/php/
+      dockerfile: Dockerfile
+    container_name: ${APP_NAME}_php
+    volumes:
+      - ./app/:/var/www/html
+    ports:
+      - "9001:9000"
+    depends_on:
+      - mysql
+    networks:
+      - webapp
+
+  mysql:
+    image: mysql:8
+    container_name: ${APP_NAME}_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOTPASSWORD}
+    networks:
+      - webapp
